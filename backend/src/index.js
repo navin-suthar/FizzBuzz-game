@@ -1,33 +1,53 @@
-const { fizzBuzz } = require('./index');
+const express = require('express');
+const bodyParser = require('body-parser');
 
-describe('fizzBuzz', () => {
-  test('returns FizzBuzz for multiples of 3 and 5', () => {
-    const value = 15;
-    const expected = { result: 'FizzBuzz', divisions: [] };
-    expect(fizzBuzz(value)).toEqual(expected);
+const app = express();
+const port = 3000;
+
+app.use(bodyParser.json());
+
+// FizzBuzz logic function
+function fizzBuzz(value) {
+  let result = '';
+  let divisions = [];
+
+  if (typeof value !== 'number' || isNaN(value) || value === '' || value === null) {
+    result = 'Invalid item';
+  } else {
+    if (value % 3 !== 0 && value % 5 !== 0) {
+      divisions.push(`Divided ${value} by 3`);
+      divisions.push(`Divided ${value} by 5`);
+    }
+
+    if (value % 3 === 0 && value % 5 === 0) {
+      result = 'FizzBuzz';
+    } else if (value % 3 === 0) {
+      result = 'Fizz';
+    } else if (value % 5 === 0) {
+      result = 'Buzz';
+    }
+  }
+
+  return { result, divisions };
+}
+
+// API endpoint
+app.post('/fizzbuzz', (req, res) => {
+  const { values } = req.body;
+  const output = [];
+
+  if (!Array.isArray(values)) {
+    return res.status(400).json({ error: 'Input must be an array' });
+  }
+
+  values.forEach(value => {
+    const { result, divisions } = fizzBuzz(value);
+    output.push({ value, result, divisions });
   });
 
-  test('returns Fizz for multiples of 3', () => {
-    const value = 9;
-    const expected = { result: 'Fizz', divisions: ['Divided 9 by 5'] };
-    expect(fizzBuzz(value)).toEqual(expected);
-  });
+  res.json(output);
+});
 
-  test('returns Buzz for multiples of 5', () => {
-    const value = 20;
-    const expected = { result: 'Buzz', divisions: ['Divided 20 by 3'] };
-    expect(fizzBuzz(value)).toEqual(expected);
-  });
-
-  test('returns the number for non-multiples of 3 and 5', () => {
-    const value = 7;
-    const expected = { result: '', divisions: ['Divided 7 by 3', 'Divided 7 by 5'] };
-    expect(fizzBuzz(value)).toEqual(expected);
-  });
-
-  test('returns Invalid item for non-numeric input', () => {
-    const value = 'foo';
-    const expected = { result: 'Invalid item', divisions: [] };
-    expect(fizzBuzz(value)).toEqual(expected);
-  });
+app.listen(port, () => {
+  console.log(`Server running at http://localhost:${port}`);
 });
